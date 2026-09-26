@@ -1,2 +1,2 @@
-Pon aquí tu sonido personalizado con el nombre alerta.mp3 o alerta.ogg (OGG Vorbis).
-Reinicia el juego por completo después de añadirlo.
+EN: Put your custom sound here named alert.mp3 or alert.ogg (OGG Vorbis). Fully restart the game after adding it.
+ES: Pon aquí tu sonido personalizado con el nombre alerta.mp3 o alerta.ogg (OGG Vorbis). Reinicia el juego por completo después de añadirlo.

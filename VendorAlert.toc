@@ -1,12 +1,15 @@
 ## Interface: 16001
 ## Title: VendorAlert
-## Notes: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara, avisa de durabilidad baja, notas y registro de gastos.
+## Notes: Dungeon prep: vendor alert when your bags are full, sells greys, auto-repairs, low durability warning, notes and expense tracker.
+## Notes-esES: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara, avisa de durabilidad baja, notas y registro de gastos.
+## Notes-esMX: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara, avisa de durabilidad baja, notas y registro de gastos.
 ## Author: Joaquín Macías Cáceres
-## Version: 1.3
+## Version: 1.4
 ## SavedVariables: VendorAlertDB
 ## SavedVariablesPerCharacter: VendorAlertCharDB
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
 
+Locales.lua
 VendorAlert.lua
 Tracker.lua
 Window.lua

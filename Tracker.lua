@@ -2,6 +2,7 @@
 -- Guarda totales por día (por personaje) para calcular semana, mes y total.
 local ADDON_NAME, ns = ...
 local T = CreateFrame("Frame")
+local L = ns.L
 local S -- ns.CharDB.stats
 
 local KEEP_DAYS = 70 -- días de historial diario que se conservan
@@ -66,25 +67,26 @@ end
 function ns.PrintStats()
     local st = ns.GetStats()
     local function line(name, v)
-        ns.Print(string.format("%s: reparaciones %s | ventas %s", name, ns.Money(v.repair), ns.Money(v.sales)))
+        ns.Print(L.STATS_LINE:format(name, ns.Money(v.repair), ns.Money(v.sales)))
     end
-    line("Semana", st.week)
-    line("Mes", st.month)
-    line("Total", st.total)
+    line(L.WEEK, st.week)
+    line(L.MONTH, st.month)
+    line(L.TOTAL, st.total)
 end
 
 function ns.ResetStats()
+    StaticPopupDialogs["VENDORALERT_RESET_STATS"].text = L.RESET_CONFIRM
     StaticPopup_Show("VENDORALERT_RESET_STATS")
 end
 
 StaticPopupDialogs["VENDORALERT_RESET_STATS"] = {
-    text = "¿Borrar el registro de reparaciones y ventas de este personaje?",
-    button1 = YES or "Sí",
+    text = "",
+    button1 = YES or "Yes",
     button2 = NO or "No",
     OnAccept = function()
         wipe(S.days)
         S.total.repair, S.total.sales = 0, 0
-        ns.Print("registro de gastos borrado")
+        ns.Print(L.STATS_CLEARED)
         if ns.RefreshStats then ns.RefreshStats() end
     end,
     timeout = 0,

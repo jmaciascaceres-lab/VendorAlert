@@ -1,4 +1,13 @@
-# Cambios
+# Changelog / Cambios
+
+## 1.4
+- English and Spanish support for all texts. The language follows your game client; change it with `/va lang en`, `/va lang es` or `/va lang auto`.
+- Every command works in both languages (for example `/va notes` or `/va notas`).
+- The custom sound can also be named `alert.mp3` / `alert.ogg`.
+---
+- Todos los textos en inglés y español. El idioma sigue al del cliente del juego; cámbialo con `/va idioma es`, `/va idioma en` o `/va idioma auto`.
+- Todos los comandos funcionan en ambos idiomas (por ejemplo `/va notas` o `/va notes`).
+- El sonido personalizado también puede llamarse `alert.mp3` / `alert.ogg`.
 
 ## 1.3
 - Ventana de notas para apuntar pendientes (una por personaje), movible y minimizable.

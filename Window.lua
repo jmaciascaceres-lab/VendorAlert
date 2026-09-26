@@ -4,6 +4,18 @@ local ADDON_NAME, ns = ...
 local WIDTH, HEIGHT, MIN_HEIGHT = 380, 280, 30
 local frame, notesPanel, statsPanel, editBox, minButton
 local tabs, statCells = {}, {}
+local L = ns.L
+local localized = {} -- { objeto, clave } para volver a traducir al cambiar de idioma
+
+-- Pone el texto traducido y lo recuerda para ApplyLanguage
+local function SetL(obj, key)
+    obj:SetText(L[key])
+    table.insert(localized, { obj, key })
+end
+
+function ns.ApplyLanguage()
+    for _, entry in ipairs(localized) do entry[1]:SetText(L[entry[2]]) end
+end
 
 -- Crea un frame probando plantillas por orden (algunas cambian entre versiones del juego)
 local function CreateWithTemplate(kind, name, parent, ...)
@@ -81,7 +93,7 @@ local function BuildNotes()
 
     local placeholder = editBox:CreateFontString(nil, "OVERLAY", "GameFontDisable")
     placeholder:SetPoint("TOPLEFT", 2, -2)
-    placeholder:SetText("Escribe aquí tus pendientes...")
+    SetL(placeholder, "PLACEHOLDER")
     placeholder:SetShown(editBox:GetText() == "")
 
     editBox:SetScript("OnTextChanged", function(self, userInput)
@@ -112,19 +124,19 @@ local function BuildStats()
     statsPanel:SetPoint("BOTTOMRIGHT", -16, 12)
 
     local cols = { { x = 0, w = 70 }, { x = 72, w = 90 }, { x = 164, w = 90 }, { x = 256, w = 90 } }
-    local headers = { "", "Reparaciones", "Ventas", "Balance" }
-    local rows = { { key = "week", label = "Semana" }, { key = "month", label = "Mes" }, { key = "total", label = "Total" } }
+    local headers = { false, "COL_REPAIRS", "COL_SALES", "COL_BALANCE" }
+    local rows = { { key = "week", label = "WEEK" }, { key = "month", label = "MONTH" }, { key = "total", label = "TOTAL" } }
 
-    local function Cell(row, col, text, font)
+    local function Cell(row, col, key, font)
         local fs = statsPanel:CreateFontString(nil, "OVERLAY", font or "GameFontHighlightSmall")
         fs:SetPoint("TOPLEFT", cols[col].x, -row * 26)
         fs:SetWidth(cols[col].w)
         fs:SetJustifyH(col == 1 and "LEFT" or "RIGHT")
-        fs:SetText(text or "")
+        if key then SetL(fs, key) end
         return fs
     end
 
-    for c, h in ipairs(headers) do Cell(0, c, h, "GameFontNormalSmall") end
+    for c, h in ipairs(headers) do Cell(0, c, h or nil, "GameFontNormalSmall") end
     for r, row in ipairs(rows) do
         Cell(r, 1, row.label, "GameFontNormalSmall")
         statCells[row.key] = { repair = Cell(r, 2), sales = Cell(r, 3), net = Cell(r, 4) }
@@ -134,12 +146,12 @@ local function BuildStats()
     info:SetPoint("TOPLEFT", 0, -4 * 26 - 6)
     info:SetWidth(WIDTH - 40)
     info:SetJustifyH("LEFT")
-    info:SetText("Ventas: todo lo que vendes a vendedores. La semana empieza el lunes. Datos de este personaje.")
+    SetL(info, "STATS_INFO")
 
     local reset = CreateWithTemplate("Button", nil, statsPanel, "UIPanelButtonTemplate")
     reset:SetSize(90, 22)
     reset:SetPoint("BOTTOMRIGHT", 0, 0)
-    reset:SetText("Reiniciar")
+    SetL(reset, "RESET_BUTTON")
     reset:SetScript("OnClick", ns.ResetStats)
 end
 
@@ -197,11 +209,11 @@ local function BuildWindow()
     minButton:SetScript("OnClick", function() SetMinimized(not ns.DB.window.minimized) end)
 
     local x = 12
-    for _, t in ipairs({ { key = "notes", text = "Notas" }, { key = "stats", text = "Gastos" } }) do
+    for _, t in ipairs({ { key = "notes", text = "TAB_NOTES" }, { key = "stats", text = "TAB_STATS" } }) do
         local tab = CreateWithTemplate("Button", nil, frame, "UIPanelButtonTemplate")
         tab:SetSize(80, 22)
         tab:SetPoint("TOPLEFT", x, -30)
-        tab:SetText(t.text)
+        SetL(tab, t.text)
         tab:SetScript("OnClick", function() SetTab(t.key) end)
         tabs[t.key] = tab
         x = x + 84
@@ -281,14 +293,14 @@ local function BuildMinimapButton()
         local st = ns.GetStats()
         GameTooltip:SetOwner(self, "ANCHOR_LEFT")
         GameTooltip:AddLine("VendorAlert")
-        GameTooltip:AddDoubleLine("Bolsas", string.format("%d/%d (%d%%)", used, total, ns.Pct(fill)), 1, 1, 1, 1, 1, 1)
-        GameTooltip:AddDoubleLine("Durabilidad", ns.Pct(ns.LowestDurability()) .. "%", 1, 1, 1, 1, 1, 1)
-        GameTooltip:AddDoubleLine("Reparaciones (semana)", ns.Money(st.week.repair), 1, 1, 1, 1, 1, 1)
-        GameTooltip:AddDoubleLine("Ventas (semana)", ns.Money(st.week.sales), 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L.TT_BAGS, string.format("%d/%d (%d%%)", used, total, ns.Pct(fill)), 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L.TT_DUR, ns.Pct(ns.LowestDurability()) .. "%", 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L.TT_WEEK_REPAIRS, ns.Money(st.week.repair), 1, 1, 1, 1, 1, 1)
+        GameTooltip:AddDoubleLine(L.TT_WEEK_SALES, ns.Money(st.week.sales), 1, 1, 1, 1, 1, 1)
         GameTooltip:AddLine(" ")
-        GameTooltip:AddLine("Clic izquierdo: notas", 0.6, 0.6, 0.6)
-        GameTooltip:AddLine("Clic derecho: gastos", 0.6, 0.6, 0.6)
-        GameTooltip:AddLine("Arrastrar: mover el icono", 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(L.TT_LEFT, 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(L.TT_RIGHT, 0.6, 0.6, 0.6)
+        GameTooltip:AddLine(L.TT_DRAG, 0.6, 0.6, 0.6)
         GameTooltip:Show()
     end)
     mmButton:SetScript("OnLeave", function() GameTooltip:Hide() end)

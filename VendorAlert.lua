@@ -3,6 +3,7 @@
 -- vende objetos grises, repara automáticamente y avisa de durabilidad baja.
 local ADDON_NAME, ns = ...
 ns.onLoad = {} -- funciones de otros módulos que se ejecutan al cargar los datos
+local L = ns.L  -- textos traducidos (Locales.lua)
 local f = CreateFrame("Frame")
 local DB
 
@@ -13,7 +14,8 @@ local DEFAULTS = {
     autoSell      = true,  -- vender grises al abrir un vendedor
     autoRepair    = true,  -- reparar al abrir un vendedor que repare
     durThreshold  = 0.30,  -- avisar si algún objeto baja de este % de durabilidad
-    customSound   = true,  -- usar Sounds\alerta.ogg / alerta.mp3 si existe
+    customSound   = true,  -- usar Sounds\alerta.mp3 (o alert.mp3, .ogg) si existe
+    lang          = "auto", -- "auto" (según el cliente), "en" o "es"
     minimap       = { angle = 200, hide = false },
     window        = { shown = false, minimized = false, tab = "notes" },
     vendors       = {},    -- [npcId] = { name = "...", repair = true/false }
@@ -40,7 +42,7 @@ local SOUND_DIR = "Interface\\AddOns\\" .. ADDON_NAME .. "\\Sounds\\"
 local function PlayAlert()
     if not DB.sound then return end
     if DB.customSound and PlaySoundFile then
-        for _, file in ipairs({ "alerta.ogg", "alerta.mp3" }) do
+        for _, file in ipairs({ "alerta.mp3", "alerta.ogg", "alert.mp3", "alert.ogg" }) do
             if PlaySoundFile(SOUND_DIR .. file, "Master") then return end
         end
     end
@@ -152,7 +154,7 @@ end
 -- Alerta de proximidad
 ----------------------------------------------------------------------
 local function Alert(name, reasons)
-    local msg = "¡Vendedor cerca: " .. name .. "! " .. table.concat(reasons, ", ")
+    local msg = L.VENDOR_NEAR:format(name) .. " " .. table.concat(reasons, ", ")
     PlayAlert()
     if RaidNotice_AddMessage and RaidWarningFrame then
         RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
@@ -169,11 +171,11 @@ local function CheckUnit(unit)
     local reasons = {}
     local fill = BagFill()
     if fill >= DB.threshold then
-        table.insert(reasons, "bolsas al " .. Pct(fill) .. "%")
+        table.insert(reasons, L.REASON_BAGS:format(Pct(fill)))
     end
     local dur = LowestDurability()
     if vendor.repair and dur < DB.durThreshold then
-        table.insert(reasons, "durabilidad al " .. Pct(dur) .. "% (repara aquí)")
+        table.insert(reasons, L.REASON_DUR:format(Pct(dur)))
     end
     if #reasons == 0 then return end
 
@@ -204,7 +206,7 @@ local function CheckDurability()
         if not durWarned then
             durWarned = true
             PlayAlert()
-            local msg = "¡Durabilidad baja! Tu equipo está al " .. Pct(dur) .. "%"
+            local msg = L.LOW_DUR:format(Pct(dur))
             if RaidNotice_AddMessage and RaidWarningFrame then
                 RaidNotice_AddMessage(RaidWarningFrame, msg, ChatTypeInfo["RAID_WARNING"])
             end
@@ -224,9 +226,9 @@ local function AutoRepair()
     if not canRepair or not cost or cost == 0 then return end
     if GetMoney() >= cost then
         RepairAllItems()
-        Print("equipo reparado por " .. Money(cost))
+        Print(L.REPAIRED:format(Money(cost)))
     else
-        Print("no tienes oro suficiente para reparar (" .. Money(cost) .. ")")
+        Print(L.NO_GOLD:format(Money(cost)))
     end
 end
 
@@ -255,7 +257,7 @@ local function SellJunkPass()
         end
     end
     if soldCount > 0 then
-        Print(soldCount .. " objetos grises vendidos por " .. Money(soldTotal))
+        Print(L.SOLD:format(soldCount, Money(soldTotal)))
     end
 end
 
@@ -278,6 +280,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
         MigrateVendors()
         VendorAlertCharDB = VendorAlertCharDB or {}
         ns.DB, ns.CharDB = DB, VendorAlertCharDB
+        ns.SetLanguage(DB.lang)
         for _, fn in ipairs(ns.onLoad) do fn() end
 
     elseif event == "PLAYER_ENTERING_WORLD" then
@@ -291,7 +294,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
             local vendor = DB.vendors[id]
             if not vendor then
                 DB.vendors[id] = { name = UnitName("npc") or "?", repair = repair }
-                Print("vendedor aprendido: " .. DB.vendors[id].name .. (repair and " (repara)" or ""))
+                Print(L.LEARNED:format(DB.vendors[id].name) .. (repair and L.LEARNED_REPAIR or ""))
             else
                 vendor.repair = repair
             end
@@ -328,45 +331,72 @@ end
 -- Comandos: /va
 ----------------------------------------------------------------------
 SLASH_VENDORALERT1, SLASH_VENDORALERT2 = "/va", "/vendoralert"
-SlashCmdList.VENDORALERT = function(input)
-    local cmd, arg = (input or ""):lower():match("^(%S*)%s*(.-)$")
-    local onoff = function(b) return b and "activado" or "desactivado" end
 
-    if cmd == "umbral" and tonumber(arg) then
+-- Cada comando acepta la palabra en inglés y en español
+local COMMANDS = {
+    threshold = "threshold", umbral = "threshold",
+    durability = "durability", durabilidad = "durability",
+    sell = "sell", vender = "sell",
+    repair = "repair", reparar = "repair",
+    sound = "sound", sonido = "sound",
+    tone = "tone", tono = "tone",
+    test = "test", prueba = "test",
+    notes = "notes", notas = "notes",
+    stats = "stats", expenses = "stats", gastos = "stats",
+    resetstats = "resetstats", borrargastos = "resetstats",
+    icon = "icon", icono = "icon",
+    lang = "lang", language = "lang", idioma = "lang",
+    reset = "reset",
+}
+
+SlashCmdList.VENDORALERT = function(input)
+    local word, arg = (input or ""):lower():match("^(%S*)%s*(.-)$")
+    local cmd = COMMANDS[word]
+    local onoff = function(b) return b and L.ON or L.OFF end
+
+    if cmd == "threshold" and tonumber(arg) then
         DB.threshold = math.max(1, math.min(100, tonumber(arg))) / 100
-        Print("alerta de bolsas al " .. Pct(DB.threshold) .. "%")
-    elseif cmd == "durabilidad" and tonumber(arg) then
+        Print(L.SET_THRESHOLD:format(Pct(DB.threshold)))
+    elseif cmd == "durability" and tonumber(arg) then
         DB.durThreshold = math.max(1, math.min(100, tonumber(arg))) / 100
         durWarned = false
-        Print("aviso de durabilidad bajo el " .. Pct(DB.durThreshold) .. "%")
+        Print(L.SET_DUR:format(Pct(DB.durThreshold)))
         CheckDurability()
-    elseif cmd == "vender" then
+    elseif cmd == "sell" then
         DB.autoSell = not DB.autoSell
-        Print("vender grises " .. onoff(DB.autoSell))
-    elseif cmd == "reparar" then
+        Print(L.SET_SELL:format(onoff(DB.autoSell)))
+    elseif cmd == "repair" then
         DB.autoRepair = not DB.autoRepair
-        Print("reparar automáticamente " .. onoff(DB.autoRepair))
-    elseif cmd == "sonido" then
+        Print(L.SET_REPAIR:format(onoff(DB.autoRepair)))
+    elseif cmd == "sound" then
         DB.sound = not DB.sound
-        Print("sonido " .. onoff(DB.sound))
-    elseif cmd == "tono" then
+        Print(L.SET_SOUND:format(onoff(DB.sound)))
+    elseif cmd == "tone" then
         DB.customSound = not DB.customSound
-        Print("sonido personalizado " .. onoff(DB.customSound) .. " (archivo: Sounds\\alerta.ogg o alerta.mp3)")
+        Print(L.SET_TONE:format(onoff(DB.customSound)))
     elseif cmd == "test" then
-        Alert("Prueba", { "bolsas al " .. Pct((BagFill())) .. "%" })
-    elseif cmd == "notas" then
+        Alert(L.TEST_NAME, { L.REASON_BAGS:format(Pct((BagFill()))) })
+    elseif cmd == "notes" then
         ns.ToggleWindow("notes")
-    elseif cmd == "gastos" then
+    elseif cmd == "stats" then
         ns.PrintStats()
-    elseif cmd == "borrargastos" then
+    elseif cmd == "resetstats" then
         ns.ResetStats()
-    elseif cmd == "icono" then
+    elseif cmd == "icon" then
         DB.minimap.hide = not DB.minimap.hide
         ns.UpdateMinimapButton()
-        Print("icono del minimapa " .. (DB.minimap.hide and "oculto" or "visible"))
+        Print(DB.minimap.hide and L.ICON_HIDDEN or L.ICON_SHOWN)
+    elseif cmd == "lang" then
+        if arg == "auto" or ns.LANGS[arg] then
+            DB.lang = arg
+            ns.SetLanguage(arg)
+            Print(L.LANG_SET)
+        else
+            Print(L.LANG_USAGE)
+        end
     elseif cmd == "reset" then
         wipe(DB.vendors)
-        Print("lista de vendedores borrada")
+        Print(L.VENDORS_CLEARED)
     else
         local fill, used, total = BagFill()
         local count, repairers = 0, 0
@@ -374,11 +404,10 @@ SlashCmdList.VENDORALERT = function(input)
             count = count + 1
             if v.repair then repairers = repairers + 1 end
         end
-        Print(string.format("bolsas %d/%d (%d%%) | durabilidad %d%% | %d vendedores (%d reparan)",
-            used, total, Pct(fill), Pct(LowestDurability()), count, repairers))
-        Print(string.format("umbral bolsas %d%% | umbral durabilidad %d%% | vender %s | reparar %s | sonido %s",
-            Pct(DB.threshold), Pct(DB.durThreshold), onoff(DB.autoSell), onoff(DB.autoRepair), onoff(DB.sound)))
-        Print("comandos: /va notas | /va gastos | /va borrargastos | /va icono")
-        Print("/va umbral 80 | /va durabilidad 30 | /va vender | /va reparar | /va sonido | /va tono | /va test | /va reset")
+        Print(L.STATUS1:format(used, total, Pct(fill), Pct(LowestDurability()), count, repairers))
+        Print(L.STATUS2:format(Pct(DB.threshold), Pct(DB.durThreshold),
+            onoff(DB.autoSell), onoff(DB.autoRepair), onoff(DB.sound)))
+        Print(L.HELP1)
+        Print(L.HELP2)
     end
 end
