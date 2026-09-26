@@ -349,9 +349,9 @@ SlashCmdList.VENDORALERT = function(input)
             count = count + 1
             if v.repair then repairers = repairers + 1 end
         end
-        Print(string.format("bolsas %d/%d (%d%%) · durabilidad %d%% · %d vendedores (%d reparan)",
+        Print(string.format("bolsas %d/%d (%d%%) | durabilidad %d%% | %d vendedores (%d reparan)",
             used, total, Pct(fill), Pct(LowestDurability()), count, repairers))
-        Print(string.format("umbral bolsas %d%% · umbral durabilidad %d%% · vender %s · reparar %s · sonido %s",
+        Print(string.format("umbral bolsas %d%% | umbral durabilidad %d%% | vender %s | reparar %s | sonido %s",
             Pct(DB.threshold), Pct(DB.durThreshold), onoff(DB.autoSell), onoff(DB.autoRepair), onoff(DB.sound)))
         Print("comandos: /va umbral 80 | /va durabilidad 30 | /va vender | /va reparar | /va sonido | /va tono | /va test | /va reset")
     end
