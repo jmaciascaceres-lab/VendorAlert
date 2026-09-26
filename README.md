@@ -11,6 +11,9 @@ Te avisa con un sonido cuando pasas cerca de un vendedor y tus bolsas están cas
 - **Repara automáticamente** si el vendedor repara y tienes oro suficiente.
 - **Aviso de durabilidad baja** cuando alguna pieza de tu equipo baja del 30% (configurable).
 - **Sonido personalizable**: usa tu propio archivo de audio.
+- **Notas**: una pequeña ventana para apuntar tus pendientes, movible y minimizable. Cada personaje tiene las suyas.
+- **Registro de gastos**: lo que gastas en reparaciones y lo que ganas vendiendo, por semana, mes y total, con el balance.
+- **Icono en el minimapa**: clic izquierdo abre las notas, clic derecho los gastos. Arrástralo para cambiarlo de sitio.
 
 Las bolsas especiales (carcajes, munición, almas) no cuentan para el porcentaje.
 
@@ -28,6 +31,10 @@ Las bolsas especiales (carcajes, munición, almas) no cuentan para el porcentaje
 | Comando | Qué hace |
 |---|---|
 | `/va` | Muestra el estado actual y la lista de comandos |
+| `/va notas` | Abre o cierra la ventana de notas |
+| `/va gastos` | Muestra en el chat los gastos de la semana, el mes y el total |
+| `/va borrargastos` | Borra el registro de gastos del personaje |
+| `/va icono` | Muestra u oculta el icono del minimapa |
 | `/va umbral 80` | Porcentaje de bolsas llenas para la alerta |
 | `/va durabilidad 30` | Porcentaje de durabilidad para el aviso |
 | `/va vender` | Activa o desactiva la venta de grises |
@@ -48,7 +55,7 @@ Si no hay archivo, se usa el sonido de aviso de banda del juego.
 ## Consejos
 
 - Activa las placas de nombre de aliados (**Mayús+V**) para detectar vendedores a distancia.
-- Los vendedores aprendidos se guardan por cuenta en `WTF\Account\<CUENTA>\SavedVariables\VendorAlert.lua`, así que todos tus personajes los comparten.
+- Los vendedores aprendidos se guardan por cuenta en `WTF\Account\<CUENTA>\SavedVariables\VendorAlert.lua`, así que todos tus personajes los comparten. Las notas y los gastos se guardan por personaje.
 
 ## Errores y sugerencias
 
@@ -62,4 +69,4 @@ Abre un *Issue* en este repositorio. Si es un error de Lua, activa `/console scr
 
 ### English
 
-VendorAlert plays a sound when you are near a known vendor and your bags are almost full (or your gear needs repair), and automatically sells grey items and repairs. Type `/va` in game for the command list.
+VendorAlert plays a sound when you are near a known vendor and your bags are almost full (or your gear needs repair), automatically sells grey items and repairs, and includes a notes window and a repair/sales tracker. Type `/va` in game for the command list.

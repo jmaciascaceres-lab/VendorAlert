@@ -1,7 +1,8 @@
--- VendorAlert 1.1
+-- VendorAlert: núcleo
 -- Alerta sonora al ver un vendedor conocido con las bolsas casi llenas o el equipo dañado,
 -- vende objetos grises, repara automáticamente y avisa de durabilidad baja.
-local ADDON_NAME = ...
+local ADDON_NAME, ns = ...
+ns.onLoad = {} -- funciones de otros módulos que se ejecutan al cargar los datos
 local f = CreateFrame("Frame")
 local DB
 
@@ -11,8 +12,10 @@ local DEFAULTS = {
     sound         = true,
     autoSell      = true,  -- vender grises al abrir un vendedor
     autoRepair    = true,  -- reparar al abrir un vendedor que repare
-    durThreshold  = 0.30,
-    customSound   = true,  -- usar Sounds\alerta.ogg / alerta.mp3 si existe  -- avisar si algún objeto baja de este % de durabilidad
+    durThreshold  = 0.30,  -- avisar si algún objeto baja de este % de durabilidad
+    customSound   = true,  -- usar Sounds\alerta.ogg / alerta.mp3 si existe
+    minimap       = { angle = 200, hide = false },
+    window        = { shown = false, minimized = false, tab = "notes" },
     vendors       = {},    -- [npcId] = { name = "...", repair = true/false }
 }
 
@@ -22,8 +25,12 @@ local merchantOpen = false
 
 local function Print(s) print("|cffffd100VendorAlert:|r " .. s) end
 
+local CoinString = (C_CurrencyInfo and C_CurrencyInfo.GetCoinTextureString)
+    or GetCoinTextureString or GetMoneyString
+
 local function Money(copper)
-    if GetCoinTextureString then return GetCoinTextureString(copper) end
+    copper = math.floor(copper or 0)
+    if CoinString then return CoinString(copper) end
     return string.format("%dg %ds %dc", copper / 10000, (copper / 100) % 100, copper % 100)
 end
 
@@ -119,6 +126,10 @@ local function LowestDurability()
     end
     return lowest
 end
+
+-- Utilidades compartidas con los otros módulos
+ns.Print, ns.Money, ns.Pct = Print, Money, Pct
+ns.BagFill, ns.LowestDurability = BagFill, LowestDurability
 
 ----------------------------------------------------------------------
 -- Vendedores conocidos
@@ -265,6 +276,9 @@ f:SetScript("OnEvent", function(_, event, arg1)
         end
         DB = VendorAlertDB
         MigrateVendors()
+        VendorAlertCharDB = VendorAlertCharDB or {}
+        ns.DB, ns.CharDB = DB, VendorAlertCharDB
+        for _, fn in ipairs(ns.onLoad) do fn() end
 
     elseif event == "PLAYER_ENTERING_WORLD" then
         CheckDurability()
@@ -283,6 +297,7 @@ f:SetScript("OnEvent", function(_, event, arg1)
             end
             lastByNpc[id] = GetTime() -- ya estás en el vendedor, no avisar
         end
+        if ns.OnMerchantShow then ns.OnMerchantShow() end -- registro de gastos antes de reparar
         AutoRepair()
         AutoSell()
 
@@ -339,6 +354,16 @@ SlashCmdList.VENDORALERT = function(input)
         Print("sonido personalizado " .. onoff(DB.customSound) .. " (archivo: Sounds\\alerta.ogg o alerta.mp3)")
     elseif cmd == "test" then
         Alert("Prueba", { "bolsas al " .. Pct((BagFill())) .. "%" })
+    elseif cmd == "notas" then
+        ns.ToggleWindow("notes")
+    elseif cmd == "gastos" then
+        ns.PrintStats()
+    elseif cmd == "borrargastos" then
+        ns.ResetStats()
+    elseif cmd == "icono" then
+        DB.minimap.hide = not DB.minimap.hide
+        ns.UpdateMinimapButton()
+        Print("icono del minimapa " .. (DB.minimap.hide and "oculto" or "visible"))
     elseif cmd == "reset" then
         wipe(DB.vendors)
         Print("lista de vendedores borrada")
@@ -353,6 +378,7 @@ SlashCmdList.VENDORALERT = function(input)
             used, total, Pct(fill), Pct(LowestDurability()), count, repairers))
         Print(string.format("umbral bolsas %d%% | umbral durabilidad %d%% | vender %s | reparar %s | sonido %s",
             Pct(DB.threshold), Pct(DB.durThreshold), onoff(DB.autoSell), onoff(DB.autoRepair), onoff(DB.sound)))
-        Print("comandos: /va umbral 80 | /va durabilidad 30 | /va vender | /va reparar | /va sonido | /va tono | /va test | /va reset")
+        Print("comandos: /va notas | /va gastos | /va borrargastos | /va icono")
+        Print("/va umbral 80 | /va durabilidad 30 | /va vender | /va reparar | /va sonido | /va tono | /va test | /va reset")
     end
 end
