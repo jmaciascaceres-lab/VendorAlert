@@ -1,0 +1,11 @@
+# Sonido personal: no se sube al repositorio
+Sounds/*.mp3
+Sounds/*.ogg
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Salida del empaquetador
+.release/

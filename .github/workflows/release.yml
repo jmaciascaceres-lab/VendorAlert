@@ -1,0 +1,23 @@
+# Empaqueta el addon y lo publica en GitHub Releases y CurseForge
+# cada vez que creas una etiqueta de versión (por ejemplo v1.3).
+name: Publicar versión
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      CF_API_KEY: ${{ secrets.CF_API_KEY }}
+      GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: BigWigsMods/packager@v2

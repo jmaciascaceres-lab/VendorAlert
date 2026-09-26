@@ -1,0 +1,10 @@
+package-as: VendorAlert
+
+ignore:
+  - README.md
+  - CHANGELOG.md
+  - .github
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown

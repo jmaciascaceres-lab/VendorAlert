@@ -1,0 +1,8 @@
+## Interface: 11507
+## Title: VendorAlert
+## Notes: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara y avisa de durabilidad baja.
+## Author: Joaquín Macías
+## Version: 1.2
+## SavedVariables: VendorAlertDB
+
+VendorAlert.lua

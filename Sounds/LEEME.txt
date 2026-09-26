@@ -1,0 +1,2 @@
+Pon aquí tu sonido personalizado con el nombre alerta.mp3 o alerta.ogg (OGG Vorbis).
+Reinicia el juego por completo después de añadirlo.
