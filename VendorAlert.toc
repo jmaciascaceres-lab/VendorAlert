@@ -4,10 +4,11 @@
 ## Notes-esES: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara, avisa de durabilidad baja, notas y registro de gastos.
 ## Notes-esMX: Prepárate para la mazmorra: alerta de vendedor con bolsas llenas, vende grises, repara, avisa de durabilidad baja, notas y registro de gastos.
 ## Author: Joaquín Macías Cáceres
-## Version: 1.4
+## Version: @project-version@
 ## SavedVariables: VendorAlertDB
 ## SavedVariablesPerCharacter: VendorAlertCharDB
 ## IconTexture: Interface\Icons\INV_Misc_Note_01
+## X-Curse-Project-ID: 1712900
 
 Locales.lua
 VendorAlert.lua
